@@ -20,7 +20,6 @@ import (
 	"io"
 	"log"
 	"net"
-	"sync"
 )
 
 func abort(err error) {
@@ -37,10 +36,9 @@ func problem(err error, hndl func(...interface{})) bool {
 	return false
 }
 
-func stream(dst net.Conn, src net.Conn, grp *sync.WaitGroup) {
-	defer grp.Done()
+func stream(dst net.Conn, src net.Conn, rslt chan error) {
 	_, err := io.Copy(dst, src)
-	warn(err)
+	rslt <- err
 }
 
 func warn(err error) bool {

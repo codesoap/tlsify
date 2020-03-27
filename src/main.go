@@ -22,7 +22,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"sync"
 )
 
 const banner = `
@@ -76,11 +75,10 @@ func main() {
 			}
 
 			defer srvc.Close()
-			grp := &sync.WaitGroup{}
-			grp.Add(2)
-			go stream(clnt, srvc, grp)
-			go stream(srvc, clnt, grp)
-			grp.Wait()
+			rslt := make(chan error, 1)
+			go stream(clnt, srvc, rslt)
+			go stream(srvc, clnt, rslt)
+			warn(<-rslt)
 		}()
 
 	}
