@@ -40,13 +40,13 @@ Usage: %s <type> <address> <type> <address> <certificate> <key>
 `
 
 func main() {
+	fmt.Print(banner)
 
 	if len(os.Args) < 7 {
 		fmt.Printf(usage, os.Args[0])
 		return
 	}
 
-	fmt.Print(banner)
 	crt, err := tls.LoadX509KeyPair(os.Args[5], os.Args[6])
 	abort(err)
 

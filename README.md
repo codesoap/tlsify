@@ -14,8 +14,8 @@
 Build using `go build -o tlsify ./src`.
 
 Run using `tlsify <type> <address> <type> <address> <certificate> <key>`, where
-`<type>` indicates a connection type, `<address>` specifies a connection
-address and `<certificate>` and `<key>` are paths to an X.509 certificate and
+`<type>` indicates a transport type, `<address>` specifies a connection address
+and `<certificate>` and `<key>` are paths to an X.509 certificate and
 its key.
 
 ```ebnf
