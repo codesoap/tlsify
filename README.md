@@ -11,7 +11,7 @@
 
 > tlsify: a TLS termination proxy
 
-Build using `go build -o tlsify src/*`.
+Build using `go build` or install using `go get github.com/tlsify/tlsify`.
 
 Run using `tlsify <type> <address> <type> <address> <certificate> <key>`, where
 `<type>` indicates a transport type, `<address>` specifies a connection address
