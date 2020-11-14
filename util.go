@@ -18,29 +18,10 @@ package main
 
 import (
 	"io"
-	"log"
 	"net"
 )
-
-func abort(err error) {
-	problem(err, log.Fatal)
-}
-
-func problem(err error, hndl func(...interface{})) bool {
-
-	if err != nil {
-		hndl(err)
-		return true
-	}
-
-	return false
-}
 
 func stream(dst net.Conn, src net.Conn, rslt chan error) {
 	_, err := io.Copy(dst, src)
 	rslt <- err
-}
-
-func warn(err error) bool {
-	return problem(err, log.Print)
 }
