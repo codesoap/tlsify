@@ -23,6 +23,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"sync"
 )
 
 const banner = `
@@ -83,18 +84,19 @@ func main() {
 			}
 
 			defer srvc.Close()
-			rslt := make(chan error, 1)
-			go stream(clnt, srvc, rslt)
-			go stream(srvc, clnt, rslt)
 
-			if err := <-rslt; err != nil {
-				log.Print(err)
-			}
+			var wg sync.WaitGroup
+			wg.Add(2)
+			go stream(clnt, srvc, &wg)
+			go stream(srvc, clnt, &wg)
+			wg.Wait()
 		}()
 	}
 }
 
-func stream(dst net.Conn, src net.Conn, rslt chan error) {
-	_, err := io.Copy(dst, src)
-	rslt <- err
+func stream(dst net.Conn, src net.Conn, wg *sync.WaitGroup) {
+	if _, err := io.Copy(dst, src); err != nil {
+		log.Print(err)
+	}
+	wg.Done()
 }
