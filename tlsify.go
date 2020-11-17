@@ -66,9 +66,8 @@ func main() {
 	log.Print("tlsify is running")
 
 	for {
-		clnt, err := srvr.Accept()
-
 		go func() {
+			clnt, err := srvr.Accept()
 			if err != nil {
 				log.Print(err)
 				return
