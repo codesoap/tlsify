@@ -23,9 +23,11 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 )
 
-const banner = `
+const (
+	banner = `
      ____  __
     / __ \/ /_______      __
    / /_/ / __/ ___/ | /| / /
@@ -35,10 +37,18 @@ const banner = `
    Sasha P. <dev@ptrw.nl>
 ----------------------------
 `
-
-const usage = `
+	usage = `
 Usage: %s <type> <address> <type> <address> <certificate> <key>
 `
+	certCacheDuration = time.Minute
+)
+
+var (
+	cert                  *tls.Certificate
+	certCachedAt          time.Time
+	cachedCertFileModTime time.Time
+	cachedKeyFileModTime  time.Time
+)
 
 func main() {
 	fmt.Print(banner)
@@ -48,14 +58,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	crt, err := tls.LoadX509KeyPair(os.Args[5], os.Args[6])
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	srvr, err := tls.Listen(os.Args[3], os.Args[4], &tls.Config{
-		Certificates: []tls.Certificate{crt},
+		GetCertificate: getCertificate,
 	})
 
 	if err != nil {
@@ -92,6 +96,33 @@ func main() {
 			}
 		}()
 	}
+}
+
+func getCertificate(_ *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	if cert == nil || time.Now().After(certCachedAt.Add(certCacheDuration)) {
+		var certStat, keyStat os.FileInfo
+		certStat, err := os.Stat(os.Args[5])
+		if err != nil {
+			return nil, fmt.Errorf("could not read FileInfo for certificate: %w", err)
+		}
+		keyStat, err = os.Stat(os.Args[6])
+		if err != nil {
+			return nil, fmt.Errorf("could not read FileInfo for key: %w", err)
+		}
+		if certStat.ModTime() != cachedCertFileModTime ||
+			keyStat.ModTime() != cachedKeyFileModTime {
+			cachedCertFileModTime = certStat.ModTime()
+			cachedKeyFileModTime = keyStat.ModTime()
+			log.Print("loading certificate")
+			c, err := tls.LoadX509KeyPair(os.Args[5], os.Args[6])
+			if err != nil {
+				return nil, fmt.Errorf("could not load certificate: %w", err)
+			}
+			cert = &c
+		}
+		certCachedAt = time.Now()
+	}
+	return cert, nil
 }
 
 func stream(dst net.Conn, src net.Conn, rslt chan error) {
